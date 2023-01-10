@@ -7,7 +7,7 @@
 #include <limits>
 #include <functional>
 
-void GraphAlgorithms::BFS(Graph g) {
+void GraphAlgorithms::BFS(Graph& g) {
     std::vector<bool> visited(g.getSize(), false);
 
     for (int s = 0; s < g.getSize(); ++s) {
@@ -33,7 +33,7 @@ void GraphAlgorithms::BFS(Graph g) {
     std::cout << std::endl;
 }
 
-bool GraphAlgorithms::isBipartite(Graph g) {
+bool GraphAlgorithms::isBipartite(Graph& g) {
     std::vector<int> colouring(g.getSize(), -1);
 
     for (int s = 0; s < g.getSize(); ++s) {
@@ -62,7 +62,7 @@ bool GraphAlgorithms::isBipartite(Graph g) {
     return true;
 }
 
-std::vector<double> shortestPathBFS(Graph g, int s) {
+std::vector<double> shortestPathBFS(Graph& g, int s) {
     std::vector<double> level(g.getSize(), 0);
     std::vector<bool> visited(g.getSize(), false);
     std::queue<int> q;
@@ -85,7 +85,7 @@ std::vector<double> shortestPathBFS(Graph g, int s) {
     return level;
 }
 
-void GraphAlgorithms::DFS(Graph g) {
+void GraphAlgorithms::DFS(Graph& g) {
     std::vector<bool> visited(g.getSize(), false);
     for (int s = 0; s < g.getSize(); ++s) {
         if (!visited[s]) {
@@ -94,7 +94,7 @@ void GraphAlgorithms::DFS(Graph g) {
     }
 }
 
-void DFSHelper(Graph g, int s, std::vector<bool>& visited) {
+void DFSHelper(Graph& g, int s, std::vector<bool>& visited) {
     visited[s] = true;
     std::cout << s << std::endl;
 
@@ -104,7 +104,7 @@ void DFSHelper(Graph g, int s, std::vector<bool>& visited) {
     }
 }
 
-std::vector<double> dijkstra(Graph g, int s) {
+std::vector<double> dijkstra(Graph& g, int s) {
     std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int,int>>> pq;
 
     std::vector<double> distance(g.getSize(), std::numeric_limits<double>::max());
@@ -126,14 +126,14 @@ std::vector<double> dijkstra(Graph g, int s) {
     return distance;
 }
 
-std::vector<double> GraphAlgorithms::singleSourceShortestPath(Graph g, int s) {
+std::vector<double> GraphAlgorithms::singleSourceShortestPath(Graph& g, int s) {
     if (g.isWeighted())
         return dijkstra(g, s);
     else
         return shortestPathBFS(g, s);
 }
 
-std::vector<std::pair<int, int>> GraphAlgorithms::prims(Graph g) {
+std::vector<std::pair<int, int>> GraphAlgorithms::prims(Graph& g) {
     std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int,int>>> pq;
 
     int s = 0;
@@ -167,7 +167,7 @@ bool sortTupleByThirdElement(const std::tuple<int, int, double>& a, const std::t
     return std::get<2>(a) < std::get<2>(b);
 }
 
-std::vector<std::pair<int, int>> GraphAlgorithms::kruskals(Graph g) {
+std::vector<std::pair<int, int>> GraphAlgorithms::kruskals(Graph& g) {
     std::vector<std::pair<int, int>> mstEdges;
     std::vector<std::tuple<int, int, double>> edgeList = g.getEdgeList();
     std::sort(edgeList.begin(), edgeList.end(), sortTupleByThirdElement);
@@ -189,10 +189,51 @@ std::vector<std::pair<int, int>> GraphAlgorithms::kruskals(Graph g) {
     return mstEdges;
 }
 
-void GraphAlgorithms::TSP(Graph g, int s) {
+void GraphAlgorithms::TSP(Graph& g, int s) {
 
 }
 
-void GraphAlgorithms::maxFlow(Graph g, int s) {
+double maxFlowBFS(Graph& g, int s, int t, std::vector<int>& parent, std::vector<std::vector<double>>& capacity) {
+    for (int i = 0; i < parent.size(); ++i) {
+        parent[i] = -1;
+    }
+    parent[s] = -2;
+    std::queue<std::pair<int, double>> q;
+    q.push({s, std::numeric_limits<double>::max()});
 
+    while (!q.empty()) {
+        std::pair<int, double> u = q.front();
+        q.pop();
+
+        for (auto &v: g.getNeighbours(u.first)) {
+            if (parent[v.first] == -1 && capacity[u.first][v.first]) {
+                parent[v.first] = u.first;
+                double newFlow = std::min(v.second, capacity[u.first][v.first]);
+                if (v.first == t)
+                    return newFlow;
+                q.push({v.first, newFlow});
+            }
+        }
+    }
+    return 0;
+}
+
+double GraphAlgorithms::maxFlow(Graph& g, int s, int t) {
+    std::vector<std::vector<double>> capacity;
+    double maximumFlow = 0;
+    std::vector<int> parent(g.getSize());
+
+    while (true) {
+        double newFlow = maxFlowBFS(g, s, t, parent, capacity);
+        if (newFlow == 0.0) break;
+        maximumFlow += newFlow;
+        int curr = t;
+        while (curr != s) {
+            int parentCurr = parent[curr];
+            capacity[parentCurr][curr] -= newFlow;
+            capacity[curr][parentCurr] += newFlow;
+            curr = parentCurr;
+        }
+    }
+    return maximumFlow;
 }
