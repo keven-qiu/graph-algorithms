@@ -1,4 +1,7 @@
 import numpy as np
+"""
+Algorithm for image processing"
+"""
 
 class Node:
   def __init__(self, value = None, nextPtr = None) -> None:
